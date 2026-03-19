@@ -33,7 +33,7 @@
 
             <!-- GRÁFICA 1: línea de tiempo -->
             <article>
-                <h2>Evolución de la población en La Florida</h2>
+                <h2>Evolución de la población en La Florida y Las Condes</h2>
                 <p>Con una <a href="https://datavizcatalogue.com/ES/metodos/grafica_de_linea.html" target="_blank">gráfica de línea</a></p>
                 <div>
                     <svg viewBox="0 0 650 210">
@@ -68,24 +68,48 @@
                 censados: [285492, 328767, 365563, 366799, 374836]
             };
 
-            var coordenadas = ""; // acumulará los pares x,y de la polyline
-            var etiquetas   = ""; // acumulará los textos con los años
+            // FIX: no encontré info del censo de 1982 así que repetí el número glup
+            var lineal2 = {
+                censos:   [1982, 1992, 2002, 2017, 2024],
+                censados: [205359, 205359, 246474, 294838, 343632]
+            };
 
-            lineal.censados.forEach(function(poblacion, i) {
-                var minPob = Math.min(...lineal.censados);
-                var maxPob = Math.max(...lineal.censados);
-                var x = (i * 150) + 7;
-                var y = Math.round(((poblacion - minPob) / (maxPob - minPob)) * 150);
+            // FIX: calcular min/max una sola vez, fuera del forEach
+            var todasLasPoblaciones = lineal.censados.concat(lineal2.censados);
+            var minPob = Math.min(...todasLasPoblaciones);
+            var maxPob = Math.max(...todasLasPoblaciones);
 
-                coordenadas += x + "," + y + " ";
-                etiquetas   += `<text x="${i * 150}" y="205" font-size="6">${lineal.censos[i]}</text>`;
+            // FIX: espaciado ajustado para que quepan los 5 puntos en el viewBox (0-650)
+            var paso = 150;
+            var offsetX = 20;
+
+            function calcularCoordenadas(datos) {
+                return datos.map(function(poblacion, i) {
+                    var x = offsetX + (i * paso);
+                    var y = Math.round(((poblacion - minPob) / (maxPob - minPob)) * 150);
+                    return x + "," + y;
+                }).join(" ");
+            }
+
+            // Dibujamos las dos líneas
+            var coordenadas1 = calcularCoordenadas(lineal.censados);
+            var coordenadas2 = calcularCoordenadas(lineal2.censados);
+
+            document.querySelector("#lineas").innerHTML =
+                `<polyline points="${coordenadas1}" fill="none" stroke="#DE1212" stroke-width="3" />` +
+                `<polyline points="${coordenadas2}" fill="none" stroke="#1277DE" stroke-width="3" />`;
+
+            // Etiquetas de años (compartidas, usan los mismos censos)
+            var etiquetas = "";
+            lineal.censos.forEach(function(anio, i) {
+                var x = offsetX + (i * paso) - 6;
+                etiquetas += `<text x="${x}" y="205" font-size="6">${anio}</text>`;
             });
 
-            // Dibujamos la línea conectando todos los puntos
-            document.querySelector("#lineas").innerHTML =
-                `<polyline points="${coordenadas}" fill="none" stroke="#DE1212" stroke-width="5" />`;
+            // Leyenda
+            etiquetas += `<text x="5"  y="12" font-size="7" fill="#DE1212">● La Florida</text>`;
+            etiquetas += `<text x="5"  y="22" font-size="7" fill="#1277DE">● Las Condes</text>`;
 
-            // Agregamos los años debajo de la línea
             document.querySelector("#years").innerHTML = etiquetas;
 
 
@@ -93,24 +117,22 @@
 
             // Fuente: https://es.wikipedia.org/wiki/Anexo:Regiones_de_Chile_por_población
             var regiones = [
-                { region: "Puente Alto (RM)",   numero: 573935 },
-                { region: "Maipú (RM)",      numero: 521627 },
-                { region: "Santiago (RM)",          numero: 498698 },
-                { region: "La Florida (RM)",           numero: 366376 },
-                { region: "Antofagasta (Antofagasta)",       numero: 348517 },
-                { region: "Viña del Mar (Valpo.)",       numero: 332875 },
-                { region: "San Bernardo (RM)",  numero: 301313 },
-                { region: "Valparaíso (Valpo.)",   numero: 296555 },
-                { region: "Las Condes (RM)",      numero: 294838 },
-                { region: "Temuco (Temuco)",          numero: 282415 },
-                { region: "Puerto Montt (Puerto Montt)",           numero: 245902 }
+                { region: "Puente Alto (RM)",              numero: 573935 },
+                { region: "Maipú (RM)",                    numero: 521627 },
+                { region: "Santiago (RM)",                  numero: 498698 },
+                { region: "La Florida (RM)",                numero: 366376 },
+                { region: "Antofagasta (Antofagasta)",      numero: 348517 },
+                { region: "Viña del Mar (Valpo.)",          numero: 332875 },
+                { region: "San Bernardo (RM)",              numero: 301313 },
+                { region: "Valparaíso (Valpo.)",            numero: 296555 },
+                { region: "Las Condes (RM)",                numero: 294838 },
+                { region: "Temuco (Temuco)",                numero: 282415 },
+                { region: "Puerto Montt (Puerto Montt)",    numero: 245902 }
             ];
 
             regiones.forEach(function(d, i) {
-                // El ancho de cada barra es proporcional a la población
                 var ancho = d.numero / 1700;
 
-                // Cada fila baja 15 unidades con translate
                 document.querySelector("#barras").innerHTML +=
                     `<g transform="translate(0, ${i * 15})">
                         <rect x="0" y="0" width="${ancho}" height="10" fill="#8619B8" />
