@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8" />
+        <title>Práctica (para la clase)</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                text-align: center;
+                font-family: Helvetica, Arial, sans-serif;
+            }
+
+            h1 { padding: 1vh 15vw; }
+            h2, p { padding: .5vh 0; }
+
+            header, article, footer { padding: 5vh 0; }
+            header, article { border-bottom: 1px dotted black; }
+
+            div { padding: 2vh 6vw; }
+        </style>
+    </head>
+    <body>
+
+        <header>
+            <h1>Tufte refers to data-ink as the non-erasable ink used for the presentation of data</h1>
+        </header>
+
+        <main>
+
+            <!-- GRÁFICA 1: línea de tiempo -->
+            <article>
+                <h2>Evolución de la población en La Florida</h2>
+                <p>Con una <a href="https://datavizcatalogue.com/ES/metodos/grafica_de_linea.html" target="_blank">gráfica de línea</a></p>
+                <div>
+                    <svg viewBox="0 0 650 210">
+                        <!-- El grupo se voltea verticalmente para que Y crezca hacia arriba (en SVG crece hacia abajo por defecto) -->
+                        <g transform="translate(0,195) scale(1,-1)" id="lineas"></g>
+                        <g id="years"></g>
+                    </svg>
+                </div>
+            </article>
+
+            <!-- GRÁFICA 2: barras horizontales -->
+            <article>
+                <h2>Población en las distintas comunas de Chile</h2>
+                <p>Con una <a href="https://datavizcatalogue.com/ES/metodos/graficos_de_barras.html" target="_blank">gráfica de barras</a></p>
+                <div>
+                    <svg viewBox="0 0 400 170" id="barras"></svg>
+                </div>
+            </article>
+
+        </main>
+
+        <footer>
+            <p><small>Revisar lo de Data-Ink Ratio en <a href="https://infovis-wiki.net/wiki/Data-Ink_Ratio" target="_blank">infovis</a></small></p>
+        </footer>
+
+        <script>
+            // ── GRÁFICA 1: línea ──────────────────────────────────────────────
+
+            // Fuente: https://es.wikipedia.org/wiki/Anexo:Crecimiento_poblacional_de_Santiago_de_Chile
+            var lineal = {
+                censos:   [1982, 1992, 2002, 2017, 2024],
+                censados: [285492, 328767, 365563, 366799, 374836]
+            };
+
+            var coordenadas = ""; // acumulará los pares x,y de la polyline
+            var etiquetas   = ""; // acumulará los textos con los años
+
+            lineal.censados.forEach(function(poblacion, i) {
+                var minPob = Math.min(...lineal.censados);
+                var maxPob = Math.max(...lineal.censados);
+                var x = (i * 150) + 7;
+                var y = Math.round(((poblacion - minPob) / (maxPob - minPob)) * 150);
+
+                coordenadas += x + "," + y + " ";
+                etiquetas   += `<text x="${i * 150}" y="205" font-size="6">${lineal.censos[i]}</text>`;
+            });
+
+            // Dibujamos la línea conectando todos los puntos
+            document.querySelector("#lineas").innerHTML =
+                `<polyline points="${coordenadas}" fill="none" stroke="#DE1212" stroke-width="5" />`;
+
+            // Agregamos los años debajo de la línea
+            document.querySelector("#years").innerHTML = etiquetas;
+
+
+            // ── GRÁFICA 2: barras ─────────────────────────────────────────────
+
+            // Fuente: https://es.wikipedia.org/wiki/Anexo:Regiones_de_Chile_por_población
+            var regiones = [
+                { region: "Puente Alto (RM)",   numero: 573935 },
+                { region: "Maipú (RM)",      numero: 521627 },
+                { region: "Santiago (RM)",          numero: 498698 },
+                { region: "La Florida (RM)",           numero: 366376 },
+                { region: "Antofagasta (Antofagasta)",       numero: 348517 },
+                { region: "Viña del Mar (Valpo.)",       numero: 332875 },
+                { region: "San Bernardo (RM)",  numero: 301313 },
+                { region: "Valparaíso (Valpo.)",   numero: 296555 },
+                { region: "Las Condes (RM)",      numero: 294838 },
+                { region: "Temuco (Temuco)",          numero: 282415 },
+                { region: "Puerto Montt (Puerto Montt)",           numero: 245902 }
+            ];
+
+            regiones.forEach(function(d, i) {
+                // El ancho de cada barra es proporcional a la población
+                var ancho = d.numero / 1700;
+
+                // Cada fila baja 15 unidades con translate
+                document.querySelector("#barras").innerHTML +=
+                    `<g transform="translate(0, ${i * 15})">
+                        <rect x="0" y="0" width="${ancho}" height="10" fill="#8619B8" />
+                        <text x="3" y="7" fill="white" font-size="5">${d.region}</text>
+                        <text x="${ancho + 3}" y="7" font-size="6">${new Intl.NumberFormat("es-ES").format(d.numero)} habitantes</text>
+                    </g>`;
+            });
+        </script>
+    </body>
+</html>
